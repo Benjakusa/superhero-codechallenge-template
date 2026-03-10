@@ -55,6 +55,72 @@ class PowerById(Resource):
 
 api.add_resource(PowerById, '/powers/<int:id>')
 
+# Add to server/app.py
+class PowerById(Resource):
+    def get(self, id):
+        power = Power.query.get(id)
+        if not power:
+            return make_response(jsonify({"error": "Power not found"}), 404)
+        return make_response(jsonify(power.to_dict()), 200)
+    
+    def patch(self, id):
+        power = Power.query.get(id)
+        if not power:
+            return make_response(jsonify({"error": "Power not found"}), 404)
+        
+        data = request.get_json()
+        
+        try:
+            if 'description' in data:
+                power.description = data['description']
+            
+            db.session.commit()
+            return make_response(jsonify(power.to_dict()), 200)
+        except ValueError as e:
+            db.session.rollback()
+            return make_response(jsonify({"errors": [str(e)]}), 400)
+        except Exception:
+            db.session.rollback()
+            return make_response(jsonify({"errors": ["Validation errors"]}), 400)
+
+# Add to server/app.py
+class HeroPowers(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        # Validate required fields
+        if not all(k in data for k in ('strength', 'power_id', 'hero_id')):
+            return make_response(jsonify({"errors": ["Missing required fields"]}), 400)
+        
+        # Check if hero and power exist
+        hero = Hero.query.get(data['hero_id'])
+        power = Power.query.get(data['power_id'])
+        
+        if not hero or not power:
+            return make_response(jsonify({"errors": ["Hero or Power not found"]}), 404)
+        
+        try:
+            hero_power = HeroPower(
+                strength=data['strength'],
+                hero_id=data['hero_id'],
+                power_id=data['power_id']
+            )
+            
+            db.session.add(hero_power)
+            db.session.commit()
+            
+            # Return with hero and power data
+            return make_response(jsonify(hero_power.to_dict_with_both()), 201)
+            
+        except ValueError as e:
+            db.session.rollback()
+            return make_response(jsonify({"errors": [str(e)]}), 400)
+        except Exception:
+            db.session.rollback()
+            return make_response(jsonify({"errors": ["Validation errors"]}), 400)
+
+api.add_resource(HeroPowers, '/hero_powers')
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
