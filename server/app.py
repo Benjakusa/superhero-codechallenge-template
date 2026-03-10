@@ -45,6 +45,16 @@ class Powers(Resource):
 
 api.add_resource(Powers, '/powers')
 
+# Add to server/app.py
+class PowerById(Resource):
+    def get(self, id):
+        power = Power.query.get(id)
+        if not power:
+            return make_response(jsonify({"error": "Power not found"}), 404)
+        return make_response(jsonify(power.to_dict()), 200)
+
+api.add_resource(PowerById, '/powers/<int:id>')
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
