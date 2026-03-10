@@ -27,6 +27,24 @@ class Heroes(Resource):
 
 api.add_resource(Heroes, '/heroes')
 
+# Add to server/app.py
+class HeroById(Resource):
+    def get(self, id):
+        hero = Hero.query.get(id)
+        if not hero:
+            return make_response(jsonify({"error": "Hero not found"}), 404)
+        return make_response(jsonify(hero.to_dict_with_powers()), 200)
+
+api.add_resource(HeroById, '/heroes/<int:id>')
+
+# Add to server/app.py
+class Powers(Resource):
+    def get(self):
+        powers = Power.query.all()
+        return make_response(jsonify([power.to_dict() for power in powers]), 200)
+
+api.add_resource(Powers, '/powers')
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
