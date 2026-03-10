@@ -20,6 +20,13 @@ db.init_app(app)
 
 api = Api(app)
 
+class Heroes(Resource):
+    def get(self):
+        heroes = Hero.query.all()
+        return make_response(jsonify([hero.to_dict() for hero in heroes]), 200)
+
+api.add_resource(Heroes, '/heroes')
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
